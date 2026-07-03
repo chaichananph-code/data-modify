@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <title>Test Data Generator พี่เอง</title>
 <style>
+ /* Light mode */
+:root{
+  --bg:#f3f4f6;
+  --panel:#ffffff;
+  --panel2:#f9fafb;
+  --border:#d1d5db;
+  --text:#111827;
+  --muted:#6b7280;
+  --accent:#f2a154;
+  --accent2:#5fc88f;
+  --danger:#e0606a;
+  --mono:'JetBrains Mono','Consolas',monospace;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark){
   :root{
     --bg:#0f1115;
     --panel:#171a21;
@@ -11,11 +27,8 @@
     --border:#2a2f3a;
     --text:#e7e9ee;
     --muted:#8b91a0;
-    --accent:#f2a154;
-    --accent2:#5fc88f;
-    --danger:#e0606a;
-    --mono:'JetBrains Mono','Consolas',monospace;
   }
+}
   *{box-sizing:border-box;}
   body{
     margin:0;
