@@ -2,9 +2,9 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<meta name="color-scheme" content="light dark">
 <title>Test Data Generator พี่เอง</title>
 <style>
- /* Light mode */
 :root{
   --bg:#f3f4f6;
   --panel:#ffffff;
@@ -17,17 +17,13 @@
   --danger:#e0606a;
   --mono:'JetBrains Mono','Consolas',monospace;
 }
-
-/* Dark mode */
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#0f1115;
-    --panel:#171a21;
-    --panel2:#1d212b;
-    --border:#2a2f3a;
-    --text:#e7e9ee;
-    --muted:#8b91a0;
-  }
+:root[data-theme="dark"]{
+  --bg:#0f1115;
+  --panel:#171a21;
+  --panel2:#1d212b;
+  --border:#2a2f3a;
+  --text:#e7e9ee;
+  --muted:#8b91a0;
 }
   *{box-sizing:border-box;}
   body{
@@ -41,8 +37,20 @@
     font-size:20px;
     margin:0 0 4px;
     display:flex;align-items:center;gap:8px;
+    justify-content:space-between;
   }
+  .titlewrap{display:flex;align-items:center;gap:8px;}
   .sub{color:var(--muted);font-size:13px;margin-bottom:18px;}
+  .theme-toggle{
+    display:flex;align-items:center;gap:6px;
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:999px;padding:4px 4px;font-size:12px;
+  }
+  .theme-toggle button{
+    border:none;border-radius:999px;padding:6px 12px;font-size:12px;
+    cursor:pointer;background:transparent;color:var(--muted);font-weight:600;
+  }
+  .theme-toggle button.active{background:var(--accent);color:#2a1700;}
   .layout{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -125,12 +133,15 @@
 </style>
 </head>
 <body>
-
-<h1>Test Data Generator พี่เอง</h1>
+<h1>
+  <span class="titlewrap">Test Data Generator พี่เอง</span>
+  <div class="theme-toggle" id="themeToggle">
+    <button data-mode="light" onclick="setTheme('light')">☀ Light</button>
+    <button data-mode="dark" onclick="setTheme('dark')">🌙 Dark</button>
+  </div>
+</h1>
 <div class="sub">กรอกข้อมูลจริง 1 แถวต่อ 1 คน → ระบบจะขยายแถวซ้ำตามจำนวน Cover ที่กำหนด พร้อมปุ่ม Copy แยกแต่ละคอลัมน์</div>
-
 <div class="layout">
-
   <!-- LEFT: INPUT -->
   <div class="panel">
     <h2>📝 ข้อมูลจริง (Input)</h2>
@@ -140,7 +151,6 @@
       <input type="number" id="coverCount" value="5" min="1" max="50">
       <button class="btn-gen" onclick="generate()">▶ Generate</button>
     </div>
-
     <div class="pastebox">
       <div class="pastebox-head">
         <span>📥 วางข้อมูลทีเดียว (copy จาก Excel มาวางได้เลย)</span>
@@ -150,7 +160,6 @@
       <textarea id="pasteArea" rows="4" placeholder="วิชัย	ศิริมงคล	Wichai	Sirimongkol	01/01/1993	8868854121094	574065
 ธงชัย	ชัยมงคล	Thongchai	Chaimongkol	02/01/1993	4310107164931	574066"></textarea>
     </div>
-
     <div class="scroll">
       <table id="inputTable">
         <thead>
@@ -171,7 +180,6 @@
     </div>
     <div class="note">RISK_OBJECT_NO จะรันอัตโนมัติ 1,2,3,... ตามลำดับแถวเสมอ ไม่ต้องกรอก</div>
   </div>
-
   <!-- RIGHT: OUTPUT -->
   <div class="panel">
     <h2>
@@ -187,11 +195,8 @@
       </table>
     </div>
   </div>
-
 </div>
-
 <div class="toast" id="toast"></div>
-
 <script>
 const COLS = [
   {key:'RISK_OBJECT_NO', label:'RISK_OBJECT_NO'},
@@ -203,17 +208,28 @@ const COLS = [
   {key:'IDENTIFIER_VALUE', label:'IDENTIFIER_VALUE'},
   {key:'PAYER_CONTACT_ID', label:'PAYER_CONTACT_ID'},
 ];
-
 let rowId = 0;
 let generatedRows = [];
+
+// ---- Theme ----
+function setTheme(mode){
+  if(mode === 'dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+  }else{
+    document.documentElement.removeAttribute('data-theme');
+  }
+  document.querySelectorAll('#themeToggle button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+}
+// เริ่มต้นตาม system preference ครั้งแรก แต่หลังจากนี้ผู้ใช้กดปุ่มคุมเองได้เลย ไม่ถูก override
+const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+setTheme(prefersDark ? 'dark' : 'light');
 
 function parsePaste(){
   const raw = document.getElementById('pasteArea').value.trim();
   if(!raw){ showToast('ยังไม่ได้วางข้อมูล'); return; }
-
-  // ล้างแถวเดิมทั้งหมดก่อน
   document.getElementById('inputBody').innerHTML = '';
-
   const lines = raw.split(/\r?\n/).filter(l => l.trim() !== '');
   lines.forEach(line => {
     const cells = line.split('\t').map(c => c.trim());
@@ -227,10 +243,8 @@ function parsePaste(){
       PAYER_CONTACT_ID: cells[6] || '',
     });
   });
-
   showToast(`แปลงข้อมูลแล้ว ${lines.length} คน`);
 }
-
 function addRow(data){
   rowId++;
   const tbody = document.getElementById('inputBody');
@@ -251,22 +265,18 @@ function addRow(data){
   tbody.appendChild(tr);
   renumber();
 }
-
 function delRow(btn){
   btn.closest('tr').remove();
   renumber();
 }
-
 function renumber(){
   const rows = document.querySelectorAll('#inputBody tr');
   rows.forEach((r,i)=>{ r.children[0].textContent = i+1; });
 }
-
 function generate(){
   const coverCount = parseInt(document.getElementById('coverCount').value) || 1;
   const rows = document.querySelectorAll('#inputBody tr');
   generatedRows = [];
-
   rows.forEach((r, personIdx) => {
     const get = (f) => r.querySelector(`[data-f="${f}"]`).value;
     const person = {
@@ -285,20 +295,16 @@ function generate(){
       });
     }
   });
-
   renderOutput();
 }
-
 function renderOutput(){
   const head = document.getElementById('outputHead');
   const body = document.getElementById('outputBody');
-
   if(generatedRows.length === 0){
     head.innerHTML = '';
     body.innerHTML = `<tr><td colspan="8"><div class="empty">ยังไม่มีข้อมูล — กรอกฝั่งซ้ายแล้วกด Generate</div></td></tr>`;
     return;
   }
-
   head.innerHTML = COLS.map(c => `
     <th>
       <div class="col-head">
@@ -307,17 +313,14 @@ function renderOutput(){
       </div>
     </th>
   `).join('');
-
   body.innerHTML = generatedRows.map(row => `
     <tr>${COLS.map(c => `<td>${row[c.key] ?? ''}</td>`).join('')}</tr>
   `).join('');
 }
-
 function copyColumn(key){
   const text = generatedRows.map(r => r[key] ?? '').join('\n');
   navigator.clipboard.writeText(text).then(()=> showToast(`Copy คอลัมน์ ${key} แล้ว (${generatedRows.length} แถว)`));
 }
-
 function copyAll(){
   if(generatedRows.length === 0){ showToast('ยังไม่มีข้อมูลให้ copy'); return; }
   const header = COLS.map(c=>c.label).join('\t');
@@ -325,17 +328,13 @@ function copyAll(){
   const text = [header, ...lines].join('\n');
   navigator.clipboard.writeText(text).then(()=> showToast(`Copy ทั้งหมดแล้ว (${generatedRows.length} แถว)`));
 }
-
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(()=> t.classList.remove('show'), 1800);
 }
-
-// seed with 1 empty row
 addRow();
 </script>
-
 </body>
 </html>
